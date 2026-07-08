@@ -116,21 +116,11 @@ pub fn process_arabic(text: &str) -> String {
     shaped.split_whitespace()
         .rev()
         .map(|word| {
-            let chars: Vec<char> = word.chars().collect();
-            let mut result = String::new();
-            let mut i = 0;
-            while i < chars.len() {
-                if is_arabic(chars[i]) {
-                    let start = i;
-                    while i < chars.len() && is_arabic(chars[i]) { i += 1; }
-                    let rev: String = chars[start..i].iter().rev().collect();
-                    result.push_str(&rev);
-                } else {
-                    result.push(chars[i]);
-                    i += 1;
-                }
+            if word.chars().any(is_arabic) {
+                word.chars().rev().collect::<String>()
+            } else {
+                word.to_string()
             }
-            result
         })
         .collect::<Vec<_>>()
         .join(" ")
