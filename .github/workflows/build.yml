@@ -2,10 +2,7 @@ name: Build
 
 on:
   push:
-    branches: [ "**" ]
     tags: [ "v*" ]
-  pull_request:
-    branches: [ "**" ]
 
 env:
   CARGO_TERM_COLOR: always
