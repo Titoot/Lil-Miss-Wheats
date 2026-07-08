@@ -60,6 +60,7 @@ fn open_file(path: &Path, state: &mut AppState, widgets: &Widgets, suppress: &Ce
                     index: e.index,
                 }
             }).collect();
+            state.entries.sort_by(|a, b| a.label.to_lowercase().cmp(&b.label.to_lowercase()));
             state.selected_index = 0;
             state.msbt = Some(msbt_file);
 
