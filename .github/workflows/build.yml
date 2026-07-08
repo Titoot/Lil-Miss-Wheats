@@ -52,7 +52,7 @@ jobs:
       - name: Build
         shell: msys2 {0}
         run: |
-          export PATH="$CARGO_HOME/bin:$PATH"
+          export PATH="$(cygpath -u "$CARGO_HOME")/bin:$PATH"
           cargo build --release --verbose
         env:
           CARGO_BUILD_TARGET: x86_64-pc-windows-gnu
@@ -62,7 +62,7 @@ jobs:
       - name: Test
         shell: msys2 {0}
         run: |
-          export PATH="$CARGO_HOME/bin:$PATH"
+          export PATH="$(cygpath -u "$CARGO_HOME")/bin:$PATH"
           cargo test --verbose
         env:
           CARGO_BUILD_TARGET: x86_64-pc-windows-gnu
