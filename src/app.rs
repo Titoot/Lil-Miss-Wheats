@@ -82,11 +82,15 @@ pub(crate) fn select_entry(state: &AppState, widgets: &Widgets, suppress: &Cell<
     suppress.set(true);
     if let Some(entry) = state.entries.get(state.selected_index) {
         widgets.editor_label.set_text(&format!("Label: {}  (index {})", entry.label, entry.index));
-        widgets.editor_buffer.set_text(&entry.tagged_text);
+        let editor_text = if state.reverse {
+            apply_arabic_to_tagged(&entry.tagged_text)
+        } else {
+            entry.tagged_text.clone()
+        };
+        widgets.editor_buffer.set_text(&editor_text);
         widgets.original_buffer.set_text(&entry.original_tagged_text);
         widgets.reverse_check.set_active(state.reverse);
-        let display = if state.reverse { apply_arabic_to_tagged(&entry.tagged_text) } else { entry.tagged_text.clone() };
-        let bytes = crate::markup::tagged_to_binary(&display, state.encoding);
+        let bytes = crate::markup::tagged_to_binary(&entry.tagged_text, state.encoding);
         crate::gui_hexview::fill_hex_buffer(&widgets.hex_buffer, &bytes);
     } else {
         widgets.editor_label.set_text("No entry selected");
@@ -113,11 +117,7 @@ fn save_file(path: &Path, state: &mut AppState, widgets: &Widgets) {
         if idx >= all_strings.len() {
             all_strings.resize(idx + 1, Vec::new());
         }
-        let mut text = entry.tagged_text.clone();
-        if state.reverse {
-            text = apply_arabic_to_tagged(&text);
-        }
-        let bytes = crate::markup::tagged_to_binary(&text, encoding);
+        let bytes = crate::markup::tagged_to_binary(&entry.tagged_text, encoding);
         all_strings[idx] = bytes;
     }
 
@@ -514,18 +514,9 @@ pub fn build_ui(app: &gtk4::Application) {
             let mut s = state.borrow_mut();
             s.reverse = btn.is_active();
             s.dirty = true;
-            let encoding = s.encoding;
-            let text = widgets.editor_buffer.text(
-                &widgets.editor_buffer.start_iter(),
-                &widgets.editor_buffer.end_iter(),
-                false,
-            ).to_string();
-            let display_text = if btn.is_active() { apply_arabic_to_tagged(&text) } else { text };
-            let bytes = crate::markup::tagged_to_binary(&display_text, encoding);
-            crate::gui_hexview::fill_hex_buffer(&widgets.hex_buffer, &bytes);
             drop(s);
             let s2 = state.borrow();
-            update_preview(&s2, &widgets);
+            select_entry(&s2, &widgets, &sup);
         });
     }
 
@@ -546,12 +537,12 @@ pub fn build_ui(app: &gtk4::Application) {
                 .to_string();
             let idx = s.selected_index;
             let reverse = s.reverse;
+            let stored = if reverse { apply_arabic_to_tagged(&text) } else { text.clone() };
             if let Some(entry) = s.entries.get_mut(idx) {
-                entry.tagged_text = text.clone();
+                entry.tagged_text = stored.clone();
                 s.dirty = true;
             }
-            let display_text = if reverse { apply_arabic_to_tagged(&text) } else { text };
-            let bytes = crate::markup::tagged_to_binary(&display_text, s.encoding);
+            let bytes = crate::markup::tagged_to_binary(&stored, s.encoding);
             crate::gui_hexview::fill_hex_buffer(&widgets.hex_buffer, &bytes);
             drop(s);
             let s2 = state.borrow();
