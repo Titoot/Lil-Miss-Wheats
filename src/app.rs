@@ -604,6 +604,7 @@ pub(crate) fn apply_arabic_to_tagged(tagged: &str) -> String {
             while j < chars.len() {
                 if (j + 4 < chars.len() && chars[j] == '[' && chars[j + 1] == 'S' && chars[j + 2] == 'E' && chars[j + 3] == 'P')
                     || (j + 5 < chars.len() && chars[j] == '[' && chars[j + 1] == 'T' && chars[j + 2] == 'T' && chars[j + 3] == 'S')
+                    || (j + 2 < chars.len() && chars[j] == '[' && chars[j + 1] == '-' && chars[j + 2] == ']')
                 {
                     break;
                 }
