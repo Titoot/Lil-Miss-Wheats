@@ -25,12 +25,12 @@ Requires [GTK4](https://gtk.org) development libraries.
 pacman -S mingw-w64-x86_64-gtk4
 $env:Path = "C:\msys64\mingw64\bin;" + $env:Path
 $env:GSETTINGS_SCHEMA_DIR = "C:\msys64\mingw64\share\glib-2.0\schemas"
-cargo run
+cargo build
 ```
 
 ### Linux
 
 ```bash
 sudo apt install libgtk-4-dev pkg-config
-cargo run
+cargo build
 ```
