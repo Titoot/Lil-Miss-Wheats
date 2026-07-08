@@ -40,6 +40,8 @@ jobs:
           install: >
             mingw-w64-x86_64-gtk4
             mingw-w64-x86_64-toolchain
+            mingw-w64-x86_64-ntldd
+            zip
 
       - name: Install Rust (gnu target)
         uses: dtolnay/rust-toolchain@stable
@@ -66,11 +68,48 @@ jobs:
           GSETTINGS_SCHEMA_DIR: C:/msys64/mingw64/share/glib-2.0/schemas
           PKG_CONFIG_ALLOW_CROSS: 1
 
+      - name: Bundle DLLs and create archive
+        shell: msys2 {0}
+        run: |
+          MINGW_PREFIX=/mingw64
+          mkdir -p release
+
+          cp "target/x86_64-pc-windows-gnu/release/lil-miss-wheats.exe" release/
+
+          # Copy all DLL dependencies using ntldd
+          for dll in $(ntldd -R "target/x86_64-pc-windows-gnu/release/lil-miss-wheats.exe" 2>/dev/null | grep mingw64 | sed 's/.*=> //' | sed 's/ (0x.*)//'); do
+            if [ -f "$dll" ]; then
+              cp "$dll" release/
+            fi
+          done
+
+          # Copy GLib schemas (required by GTK)
+          if [ -d "$MINGW_PREFIX/share/glib-2.0/schemas" ]; then
+            mkdir -p release/share/glib-2.0/schemas
+            cp -r "$MINGW_PREFIX/share/glib-2.0/schemas/"* release/share/glib-2.0/schemas/ 2>/dev/null || true
+          fi
+
+          # Copy GDK pixbuf loaders (needed for icon loading)
+          if [ -d "$MINGW_PREFIX/lib/gdk-pixbuf-2.0" ]; then
+            cp -r "$MINGW_PREFIX/lib/gdk-pixbuf-2.0" release/ 2>/dev/null || true
+          fi
+
+          # Copy GTK settings
+          if [ -d "$MINGW_PREFIX/etc/gtk-4.0" ]; then
+            mkdir -p release/etc/gtk-4.0
+            cp -r "$MINGW_PREFIX/etc/gtk-4.0/"* release/etc/gtk-4.0/ 2>/dev/null || true
+          fi
+
+          # Create zip archive
+          cd release
+          zip -r ../lil-miss-wheats-windows.zip .
+          cd ..
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: lil-miss-wheats-windows
-          path: target/x86_64-pc-windows-gnu/release/lil-miss-wheats.exe
+          path: lil-miss-wheats-windows.zip
 
   release:
     if: startsWith(github.ref, 'refs/tags/v')
@@ -92,12 +131,11 @@ jobs:
       - name: Rename binaries
         run: |
           mv release/lil-miss-wheats release/lil-miss-wheats-linux
-          mv release/lil-miss-wheats.exe release/lil-miss-wheats-windows.exe
 
       - name: Create release
         uses: softprops/action-gh-release@v2
         with:
           files: |
             release/lil-miss-wheats-linux
-            release/lil-miss-wheats-windows.exe
+            release/lil-miss-wheats-windows.zip
           generate_release_notes: true
