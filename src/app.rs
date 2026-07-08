@@ -374,6 +374,30 @@ pub fn build_ui(app: &gtk4::Application) {
         preview_label: preview_label.clone(),
     });
 
+    // --- Drag-and-drop: open .msbt files ---
+    {
+        let state = state.clone();
+        let widgets = widgets.clone();
+        let sup = suppress_change.clone();
+        let drop_target = gtk4::DropTarget::new(
+            gtk4::gio::File::static_type(),
+            gtk4::gdk::DragAction::COPY,
+        );
+        drop_target.connect_drop(move |_, value, _x, _y| {
+            if let Ok(file) = value.get::<gtk4::gio::File>() {
+                if let Some(path) = file.path() {
+                    if path.extension().map_or(false, |ext| ext == "msbt") {
+                        let mut s = state.borrow_mut();
+                        open_file(&path, &mut s, &widgets, &sup);
+                        return true;
+                    }
+                }
+            }
+            false
+        });
+        window.add_controller(drop_target);
+    }
+
     // --- Close-request: unsaved changes prompt ---
     {
         let state = state.clone();
