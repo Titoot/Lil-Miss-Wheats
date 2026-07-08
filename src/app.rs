@@ -67,7 +67,9 @@ fn open_file(path: &Path, state: &mut AppState, widgets: &Widgets, suppress: &Ce
             widgets.file_label.set_text(&fname);
             widgets.status_label.set_text(&format!("Loaded {} entries", state.entries.len()));
 
+            suppress.set(true);
             gui_entry_list::rebuild(&widgets.entry_list, &state.entries, state.selected_index);
+            suppress.set(false);
             select_entry(state, widgets, suppress);
         }
         Err(e) => {
@@ -562,7 +564,9 @@ pub fn build_ui(app: &gtk4::Application) {
         let state = state.clone();
         let widgets = widgets.clone();
         let sup = suppress_change.clone();
-        entry_list.connect_row_activated(move |_list, row| {
+        entry_list.connect_row_selected(move |_list, row| {
+            if sup.get() { return; }
+            let Some(row) = row else { return };
             let idx = row.index() as usize;
             let mut s = state.borrow_mut();
             if idx < s.entries.len() {
@@ -572,6 +576,45 @@ pub fn build_ui(app: &gtk4::Application) {
             let s2 = state.borrow();
             select_entry(&s2, &widgets, &sup);
         });
+    }
+
+    // --- Keyboard: Up/Down arrow navigation ---
+    {
+        let state = state.clone();
+        let widgets = widgets.clone();
+        let sup = suppress_change.clone();
+        let key_controller = gtk4::EventControllerKey::new();
+        key_controller.connect_key_pressed(move |_, keyval, _keycode, state_mod| {
+            if state_mod != gtk4::gdk::ModifierType::empty() {
+                return glib::Propagation::Proceed;
+            }
+            let s = state.borrow();
+            if s.entries.is_empty() {
+                return glib::Propagation::Proceed;
+            }
+            let new_idx = match keyval {
+                gtk4::gdk::Key::Up if s.selected_index > 0 =>
+                    Some(s.selected_index - 1),
+                gtk4::gdk::Key::Down if s.selected_index + 1 < s.entries.len() =>
+                    Some(s.selected_index + 1),
+                _ => None,
+            };
+            let Some(new_idx) = new_idx else {
+                return glib::Propagation::Proceed;
+            };
+            drop(s);
+            let mut s = state.borrow_mut();
+            s.selected_index = new_idx;
+            drop(s);
+            let s = state.borrow();
+            select_entry(&s, &widgets, &sup);
+            drop(s);
+            if let Some(row) = widgets.entry_list.row_at_index(new_idx as i32) {
+                widgets.entry_list.select_row(Some(&row));
+            }
+            glib::Propagation::Stop
+        });
+        window.add_controller(key_controller);
     }
 }
 
