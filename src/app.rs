@@ -201,6 +201,7 @@ pub fn build_ui(app: &gtk4::Application) {
         .margin_start(4)
         .margin_top(4)
         .margin_bottom(4)
+        .min_content_height(100)
         .build();
     scroll_list.set_child(Some(&entry_list));
 
@@ -380,30 +381,20 @@ pub fn build_ui(app: &gtk4::Application) {
             if !state.borrow().dirty {
                 return glib::Propagation::Proceed;
             }
-            let dialog = gtk4::Dialog::with_buttons(
-                Some("Unsaved Changes"),
-                Some(win),
-                gtk4::DialogFlags::MODAL,
-                &[("Discard changes", gtk4::ResponseType::Accept), ("Cancel", gtk4::ResponseType::Cancel)],
-            );
-            dialog.set_default_size(350, 120);
-            let content = dialog.content_area();
-            let label = gtk4::Label::new(Some("You have unsaved changes. Discard them and close?"));
-            label.set_margin_top(12);
-            label.set_margin_bottom(12);
-            label.set_margin_start(12);
-            label.set_margin_end(12);
-            content.append(&label);
+            let alert = gtk4::AlertDialog::builder()
+                .message("Unsaved Changes")
+                .detail("You have unsaved changes. Discard them and close?")
+                .modal(true)
+                .buttons(["Discard changes", "Cancel"])
+                .build();
             let win2 = win.clone();
             let state2 = state.clone();
-            dialog.connect_response(move |d, resp| {
-                d.destroy();
-                if resp == gtk4::ResponseType::Accept {
+            alert.choose(Some(win), None::<&gtk4::gio::Cancellable>, move |result| {
+                if let Ok(0) = result {
                     state2.borrow_mut().dirty = false;
                     win2.close();
                 }
             });
-            dialog.present();
             glib::Propagation::Stop
         });
     }
@@ -417,29 +408,24 @@ pub fn build_ui(app: &gtk4::Application) {
             let s2 = state.clone();
             let w2 = widgets.clone();
             let sup2 = sup.clone();
-            let dialog = gtk4::FileChooserNative::builder()
-                .title("Open MSBT file")
-                .action(gtk4::FileChooserAction::Open)
-                .modal(true)
-                .transient_for(&widgets.window)
-                .build();
-            dialog.add_filter(&{
+            let filter = {
                 let f = gtk4::FileFilter::new();
                 f.set_name(Some("MSBT files (*.msbt)"));
                 f.add_pattern("*.msbt");
                 f
-            });
-            dialog.connect_response(move |d, resp| {
-                if resp == gtk4::ResponseType::Accept {
-                    if let Some(file) = d.file() {
-                        let path = file.path().unwrap();
+            };
+            let dialog = gtk4::FileDialog::builder()
+                .title("Open MSBT file")
+                .default_filter(&filter)
+                .build();
+            dialog.open(Some(&widgets.window), None::<&gtk4::gio::Cancellable>, move |result| {
+                if let Ok(file) = result {
+                    if let Some(path) = file.path() {
                         let mut s = s2.borrow_mut();
                         open_file(&path, &mut s, &w2, &sup2);
                     }
                 }
-                d.destroy();
             });
-            dialog.show();
         });
     }
 
@@ -468,22 +454,19 @@ pub fn build_ui(app: &gtk4::Application) {
             let s2 = state.clone();
             let w2 = widgets.clone();
             let sup2 = sup.clone();
-            let dialog = gtk4::FileChooserNative::builder()
-                .title("Save MSBT file")
-                .action(gtk4::FileChooserAction::Save)
-                .modal(true)
-                .transient_for(&widgets.window)
-                .build();
-            dialog.add_filter(&{
+            let filter = {
                 let f = gtk4::FileFilter::new();
                 f.set_name(Some("MSBT files (*.msbt)"));
                 f.add_pattern("*.msbt");
                 f
-            });
-            dialog.connect_response(move |d, resp| {
-                if resp == gtk4::ResponseType::Accept {
-                    if let Some(file) = d.file() {
-                        let path = file.path().unwrap();
+            };
+            let dialog = gtk4::FileDialog::builder()
+                .title("Save MSBT file")
+                .default_filter(&filter)
+                .build();
+            dialog.save(Some(&widgets.window), None::<&gtk4::gio::Cancellable>, move |result| {
+                if let Ok(file) = result {
+                    if let Some(path) = file.path() {
                         let mut s = s2.borrow_mut();
                         save_file(&path, &mut s, &w2);
                         if let Some(ref p) = s.file_path.clone() {
@@ -491,9 +474,7 @@ pub fn build_ui(app: &gtk4::Application) {
                         }
                     }
                 }
-                d.destroy();
             });
-            dialog.show();
         });
     }
 
