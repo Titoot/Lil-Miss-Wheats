@@ -153,8 +153,8 @@ pub fn tagged_to_binary(tagged: &str, encoding: u8) -> Vec<u8> {
                 j += 1;
             }
 
-            let tts_bytes = encode_text(&tts_text, encoding);
-            let display_bytes = encode_text(&display_text, encoding);
+            let tts_bytes = encode_text(&replace_button_tags(&tts_text), encoding);
+            let display_bytes = encode_text(&replace_button_tags(&display_text), encoding);
 
             let v3 = tts_bytes.len() as u16;
             let v2 = display_bytes.len() as u16;
@@ -253,6 +253,33 @@ fn decode_text(bytes: &[u8]) -> String {
         } else {
             result.push(c);
         }
+    }
+    result
+}
+
+fn replace_button_tags(text: &str) -> String {
+    let mut result = String::new();
+    let chars: Vec<char> = text.chars().collect();
+    let mut i = 0;
+    while i < chars.len() {
+        if chars[i] == '[' {
+            let mut end = i + 1;
+            while end < chars.len() && chars[end] != ']' {
+                end += 1;
+            }
+            if end < chars.len() && chars[end] == ']' {
+                let tag: String = chars[i + 1..end].iter().collect();
+                if let Some(cp) = cp_from_pua_button(&tag) {
+                    if let Some(c) = char::from_u32(cp) {
+                        result.push(c);
+                        i = end + 1;
+                        continue;
+                    }
+                }
+            }
+        }
+        result.push(chars[i]);
+        i += 1;
     }
     result
 }
