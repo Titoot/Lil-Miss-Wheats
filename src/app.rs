@@ -244,7 +244,7 @@ pub fn build_ui(app: &gtk4::Application) {
 
     // Tags info at the bottom
     let tags_info = gtk4::Label::new(Some(
-        "Tags:  [TTS(\"tts\")]text - TTS voice text + display text   |   [SEP] - Textbox separator   |   [N] - Null byte (line break)   |   [A] A Button   [Y] Y Button   [+] Plus Button   [MINUS] Minus Button   [LEFT] [DOWN] [RIGHT] D-Pad"
+        "Tags:  [TTS(\"tts\")]text - TTS voice text + display text   |   [SEP] - Textbox separator   |   [N] - Null byte (line break)   |   [A] [A_ALT] [B] [B_ALT] [Y] [+] [MINUS] [UP] [DOWN] [LEFT] [RIGHT] [SL] [SR]"
     ));
     tags_info.set_xalign(0.0);
     tags_info.set_wrap(true);

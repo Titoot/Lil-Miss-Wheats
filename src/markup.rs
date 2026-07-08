@@ -3,13 +3,19 @@ const SEP_MARKER: [u8; 7] = [0x0E, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00];
 
 fn pua_button_from_cp(cp: u32) -> Option<&'static str> {
     match cp {
+        0xE0AB => Some("[A_ALT]"),
+        0xE0AC => Some("[B_ALT]"),
         0xE0E0 => Some("[A]"),
+        0xE0E1 => Some("[B]"),
         0xE0E3 => Some("[Y]"),
-        0xE0EB => Some("[LEFT]"),
+        0xE0E8 => Some("[SL]"),
+        0xE0E9 => Some("[SR]"),
+        0xE0EB => Some("[UP]"),
         0xE0EC => Some("[DOWN]"),
-        0xE0ED => Some("[RIGHT]"),
-        0xE0F0 => Some("[+]"),
-        0xE0F1 => Some("[MINUS]"),
+        0xE0ED => Some("[LEFT]"),
+        0xE0EE => Some("[RIGHT]"),
+        0xE0F0 => Some("[MINUS]"),
+        0xE0F1 => Some("[+]"),
         _ => None,
     }
 }
@@ -17,12 +23,18 @@ fn pua_button_from_cp(cp: u32) -> Option<&'static str> {
 fn cp_from_pua_button(name: &str) -> Option<u32> {
     match name {
         "A" => Some(0xE0E0),
+        "A_ALT" => Some(0xE0AB),
+        "B" => Some(0xE0E1),
+        "B_ALT" => Some(0xE0AC),
         "Y" => Some(0xE0E3),
-        "LEFT" => Some(0xE0EB),
+        "SL" => Some(0xE0E8),
+        "SR" => Some(0xE0E9),
+        "UP" => Some(0xE0EB),
         "DOWN" => Some(0xE0EC),
-        "RIGHT" => Some(0xE0ED),
-        "+" => Some(0xE0F0),
-        "MINUS" => Some(0xE0F1),
+        "LEFT" => Some(0xE0ED),
+        "RIGHT" => Some(0xE0EE),
+        "MINUS" => Some(0xE0F0),
+        "+" => Some(0xE0F1),
         _ => None,
     }
 }
