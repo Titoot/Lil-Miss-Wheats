@@ -3,6 +3,7 @@ name: Build
 on:
   push:
     branches: [ "**" ]
+    tags: [ "v*" ]
   pull_request:
     branches: [ "**" ]
 
@@ -32,9 +33,6 @@ jobs:
 
   windows:
     runs-on: windows-latest
-    defaults:
-      run:
-        shell: msys2 {0}
     steps:
       - uses: actions/checkout@v4
 
@@ -45,20 +43,58 @@ jobs:
           install: >
             mingw-w64-x86_64-gtk4
             mingw-w64-x86_64-toolchain
-            mingw-w64-x86_64-cargo
+
+      - name: Install Rust (gnu target)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-gnu
 
       - name: Build
+        shell: msys2 {0}
         run: cargo build --release --verbose
         env:
+          CARGO_BUILD_TARGET: x86_64-pc-windows-gnu
           GSETTINGS_SCHEMA_DIR: C:/msys64/mingw64/share/glib-2.0/schemas
 
       - name: Test
+        shell: msys2 {0}
         run: cargo test --verbose
         env:
+          CARGO_BUILD_TARGET: x86_64-pc-windows-gnu
           GSETTINGS_SCHEMA_DIR: C:/msys64/mingw64/share/glib-2.0/schemas
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: lil-miss-wheats-windows
-          path: target/release/lil-miss-wheats.exe
+          path: target/x86_64-pc-windows-gnu/release/lil-miss-wheats.exe
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [linux, windows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: lil-miss-wheats-linux
+          path: release
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: lil-miss-wheats-windows
+          path: release
+
+      - name: Rename binaries
+        run: |
+          mv release/lil-miss-wheats release/lil-miss-wheats-linux
+          mv release/lil-miss-wheats.exe release/lil-miss-wheats-windows.exe
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            release/lil-miss-wheats-linux
+            release/lil-miss-wheats-windows.exe
+          generate_release_notes: true
