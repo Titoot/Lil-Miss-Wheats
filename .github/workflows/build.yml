@@ -50,22 +50,24 @@ jobs:
           targets: x86_64-pc-windows-gnu
 
       - name: Build
-        shell: pwsh
+        shell: msys2 {0}
         run: |
-          $env:PATH = "C:\msys64\mingw64\bin;" + $env:PATH
+          export PATH="$CARGO_HOME/bin:$PATH"
           cargo build --release --verbose
         env:
           CARGO_BUILD_TARGET: x86_64-pc-windows-gnu
-          GSETTINGS_SCHEMA_DIR: C:\msys64\mingw64\share\glib-2.0\schemas
+          GSETTINGS_SCHEMA_DIR: C:/msys64/mingw64/share/glib-2.0/schemas
+          PKG_CONFIG_ALLOW_CROSS: 1
 
       - name: Test
-        shell: pwsh
+        shell: msys2 {0}
         run: |
-          $env:PATH = "C:\msys64\mingw64\bin;" + $env:PATH
+          export PATH="$CARGO_HOME/bin:$PATH"
           cargo test --verbose
         env:
           CARGO_BUILD_TARGET: x86_64-pc-windows-gnu
-          GSETTINGS_SCHEMA_DIR: C:\msys64\mingw64\share\glib-2.0\schemas
+          GSETTINGS_SCHEMA_DIR: C:/msys64/mingw64/share/glib-2.0/schemas
+          PKG_CONFIG_ALLOW_CROSS: 1
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
