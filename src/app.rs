@@ -218,6 +218,7 @@ pub fn build_ui(app: &gtk4::Application) {
     let scroll_editor = gtk4::ScrolledWindow::builder()
         .hscrollbar_policy(gtk4::PolicyType::Never)
         .vexpand(true)
+        .min_content_height(100)
         .build();
     scroll_editor.set_child(Some(&editor_view));
 
