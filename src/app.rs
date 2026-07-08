@@ -78,7 +78,7 @@ fn open_file(path: &Path, state: &mut AppState, widgets: &Widgets, suppress: &Ce
     }
 }
 
-fn select_entry(state: &AppState, widgets: &Widgets, suppress: &Cell<bool>) {
+pub(crate) fn select_entry(state: &AppState, widgets: &Widgets, suppress: &Cell<bool>) {
     suppress.set(true);
     if let Some(entry) = state.entries.get(state.selected_index) {
         widgets.editor_label.set_text(&format!("Label: {}  (index {})", entry.label, entry.index));
@@ -585,6 +585,12 @@ pub fn build_ui(app: &gtk4::Application) {
         let sup = suppress_change.clone();
         let key_controller = gtk4::EventControllerKey::new();
         key_controller.connect_key_pressed(move |_, keyval, _keycode, state_mod| {
+            if state_mod == gtk4::gdk::ModifierType::CONTROL_MASK
+                && (keyval == gtk4::gdk::Key::f || keyval == gtk4::gdk::Key::F)
+            {
+                crate::find_dialog::show_find_dialog(&widgets, &state, &sup);
+                return glib::Propagation::Stop;
+            }
             if state_mod != gtk4::gdk::ModifierType::empty() {
                 return glib::Propagation::Proceed;
             }

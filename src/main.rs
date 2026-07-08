@@ -7,6 +7,7 @@ mod arabic;
 mod gui_types;
 mod gui_entry_list;
 mod gui_hexview;
+mod find_dialog;
 
 use gtk4::prelude::ApplicationExt;
 use gtk4::prelude::ApplicationExtManual;
