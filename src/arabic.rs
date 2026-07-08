@@ -109,6 +109,9 @@ fn is_arabic(c: char) -> bool {
 }
 
 pub fn process_arabic(text: &str) -> String {
+    if !text.chars().any(is_arabic) {
+        return text.to_string();
+    }
     let shaped = reshape_arabic(text);
     shaped.split_whitespace()
         .rev()
